@@ -1,0 +1,228 @@
+------------------------mainActivity.java---------------------------
+package com.example.lab_6_sms;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.provider.Telephony;
+import android.telephony.SmsManager;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.Toast;
+
+public class MainActivity extends AppCompatActivity {
+
+    String pn, mess;
+    Button send_sms;
+    ImageButton ib;
+    EditText na, num, message;
+    Toast t;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        Intent pickcontact = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+
+        na = findViewById(R.id.name);
+        num = findViewById(R.id.number);
+        message = findViewById(R.id.message);
+        ib = findViewById(R.id.imageButton);
+        send_sms = findViewById(R.id.send_sms);
+
+        ib.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivityForResult(pickcontact , 1);
+            }
+        });
+
+        requestContactsPermission();
+
+        send_sms.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                pn = num.getText().toString();
+                mess = message.getText().toString();
+
+                if(pn.equalsIgnoreCase("")||mess.equalsIgnoreCase("")){
+                    t.setText("Phone number or message is empty");
+                    t.setDuration(Toast.LENGTH_LONG);
+                    t.show();
+                    na.requestFocus()
+                }else{
+                    SmsManager smsManager = SmsManager.getDefault();
+                    smsManager.sendTextMessage(pn,null,mess,null,null);
+                    t.setText("Message Sent");
+                    t.setDuration(Toast.LENGTH_LONG);
+                    t.show();
+                }
+            }
+        });
+
+    }
+
+
+    private void requestContactsPermission(){
+
+        if(!hasContactsPermission()){
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_CONTACTS},1);
+        }
+        if(!hasSendSMSPermission()){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS} , 1);
+        }
+    }
+
+    private boolean hasContactsPermission(){
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)== PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean hasSendSMSPermission(){
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)== PackageManager.PERMISSION_GRANTED;
+    }
+
+    @SuppressLint({"Suspiciousindentation" , "Range"})
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data){
+        super.onActivityResult(requestCode , resultCode, data);
+
+        if(resultCode!= Activity.RESULT_OK)return;
+        Uri contactUri = data.getData();
+
+        Cursor cursor = this.getContentResolver().query(contactUri , new String[]{"display_name" , "data1"},
+                null , null, null);
+
+        try{
+            if(cursor.getCount()==0)return;
+            cursor.moveToFirst();
+            na.setText(cursor.getString(0));
+            num.setText(cursor.getString(0));
+        }finally{
+            System.out.println("in phone cursor");
+        }
+
+
+    }
+
+
+}
+
+
+
+-------------------------------------manifest.xml------------------------------------
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+
+
+--------------------------------------activity_main.xml-----------------------------------
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="52dp"
+        android:layout_marginEnd="100dp"
+        android:layout_marginBottom="634dp"
+        android:text="SMS_SENDER"
+        android:textColor="#090909"
+        android:textSize="34sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Name"
+        android:textColor="#090909"
+        android:textSize="24sp"
+        tools:layout_editor_absoluteX="41dp"
+        tools:layout_editor_absoluteY="141dp" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Number"
+        android:textColor="#100F0F"
+        android:textSize="24sp"
+        tools:layout_editor_absoluteX="40dp"
+        tools:layout_editor_absoluteY="205dp" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Message"
+        android:textColor="#131313"
+        android:textSize="24sp"
+        tools:layout_editor_absoluteX="38dp"
+        tools:layout_editor_absoluteY="276dp" />
+
+    <ImageButton
+        android:id="@+id/imageButton"
+        android:layout_width="63dp"
+        android:layout_height="60dp"
+        tools:layout_editor_absoluteX="332dp"
+        tools:layout_editor_absoluteY="126dp"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <EditText
+        android:id="@+id/name"
+        android:layout_width="182dp"
+        android:layout_height="43dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        tools:layout_editor_absoluteX="140dp"
+        tools:layout_editor_absoluteY="143dp" />
+
+    <EditText
+        android:id="@+id/number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPersonName"
+        tools:layout_editor_absoluteX="140dp"
+        tools:layout_editor_absoluteY="204dp" />
+
+    <EditText
+        android:id="@+id/message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPersonName"
+        tools:layout_editor_absoluteX="143dp"
+        tools:layout_editor_absoluteY="262dp" />
+
+    <Button
+        android:id="@+id/send_sms"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="send_sms"
+        tools:layout_editor_absoluteX="149dp"
+        tools:layout_editor_absoluteY="328dp" />
+</androidx.constraintlayout.widget.ConstraintLayout>
