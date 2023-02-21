@@ -1,0 +1,104 @@
+--------------------------start.js--------------------------
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register("/sw.js")
+    .then((reg)=>console.log(reg))
+    .catch((err)=>console.log(err));
+}else{
+    console.log("your browser does not support service Worker");
+}
+
+----------------------------manifest.json----------------------
+{
+    "name" : "lab_Program_9",
+    "short_name" : "lab_9",
+    "start_url" : "/index.html",
+    "display" : "fullscreen",
+    "orientation" : "portrait-primary",
+    "background_color" : "#876559",
+    "theme_color" : "#ff6655",
+    "icons": [
+        {
+            "src" : "/icons/rvlogo.png",
+            "sizes" : "200x200",
+            "type" : "image/png"
+        },
+        {
+            "src" : "/icons/rvlogo2.jpeg",
+            "sizes" : "200x200",
+            "type" : "image/jpeg"
+        }
+    ]
+}
+
+----------------------------sw.js--------------------------------
+var mycache = "mycache";
+
+var assests = [
+    "/",
+    "/index.html",
+    "/manifest.json",
+    "/sw.js",
+    "/icons/rvlogo.png",
+    "/icons/rvlogo2.jpeg",
+    "/js/start.js"
+];
+
+self.addEventListener('install' , _event=>{
+    console.log("inside install ", _event)
+    caches.open(mycache)
+    .then(cache => {
+        cache.addAll(assests);
+    });
+});
+
+self.addEventListener('activate' , _event=>{
+    console.log("inside activate ", _event);
+});
+
+self.addEventListener('fetch' , async (event)=>{
+
+    // event.respondWith(
+    //     caches.match(event.request)
+    //         .then(respevt => {
+    //             return respevt || fetch(event.request);
+
+    //         })
+    // );
+    // console.log('inside the fetched', event);
+
+
+
+
+    let res =  fetch('https://api.github.com/users/abhishekm1359');
+    // {
+    //     headers : {
+    //         'Authorization':'token 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'
+    //     }
+    // })
+    res.then((response)=>{
+        console.log(response.status)
+        console.log(response.ok)
+        return response.text()
+    }).then((value2)=>{
+        console.log(value2)
+    })
+
+});
+
+
+
+-------------------------------------index.html---------------------------------
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <title>program-9</title>
+</head>
+<body>
+    <script src="/js/start.js"></script>
+    <h1>Loading Git Hub Details</h1>
+</body>
+</html>

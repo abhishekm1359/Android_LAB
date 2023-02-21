@@ -1,0 +1,131 @@
+-------------------------manifest.json---------------------------
+{
+    "name":"LAB_PROGRAM_10",
+    "short_name" : "lab_10",
+    "start_url" : "/index.html",
+    "display" : "standalone",
+    "background_color" : "#67daa4",
+    "theme_color" : "#564234",
+    "description" : "Lab 10 program to display stock",
+    "icons" : [
+        {
+            "src" : "/icons/rvlogo.png",
+            "sizes" : "200x200",
+            "type" : "image/png"
+        },
+        {
+            "src" : "/icons/rvlogo2.jpeg",
+            "sizes" : "200x200",
+            "type" : "image/jpeg"
+        }
+    ]
+}
+
+
+------------------------------sw.js----------------------------------
+self.addEventListener('install' , _event=>{
+    console.log("Installed");
+
+    caches.open("stock").then((cache) => {
+        cache.add("/");
+        cache.add("/icons/rvlogo.png");
+        cache.add("/icons/rvlogo2.jpeg");
+        cache.add("/manifest.json");
+        cache.add("/sw.js");
+        cache.add("/index.html");
+    })
+    .catch((err)=>console.log(err));
+});
+
+self.addEventListener("activate" , (e) =>{
+    console.log("activated");
+});
+
+self.addEventListener("fetch" , (e)=>{
+    console.log("Fetched");
+
+    e.respondWith(
+        caches.match(e.request)
+        .then((res)=>{
+            return res || fetch(e.request);
+        })
+        .catch((err)=>{
+            console.log(err);
+        })
+    );
+});
+
+----------------------------first.html------------------------------
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+
+        td,
+        th {
+            padding: 1em;
+            border: 2px solid black;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <center>
+        <h2>Stock Market Data Display</h2>
+        <div id="stock"></div>
+    </center>
+
+    <script>
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then((e) => {
+                    if (e.active === null) {
+                        console.log("registered")
+                    }
+                });
+        } else {
+            console.log("browser does not support service worker");
+        }
+
+        fetch("data.json")
+            .then((res) => {
+                return res.json();
+            })
+            .then((stock) => {
+                var table = "<table>";
+                table +=
+
+                    "<tr><th>Company</th><th>Description</th><th>Initial Price</th><th>Price in 2007</th><th>Symbol</th></tr>";
+                for (item of stock) {
+                    table +=
+
+                        "<tr><td>" + item.company + "</td><td>" + item.description + "</td><td>" + item.initial_price + "</td><td>" + item.price_2007 + "</td><td>" + item.symbol + "</td></tr>";
+
+                }
+                table += "</table>";
+                // inserting the table into html
+                document.getElementById("stock").innerHTML = table;
+
+            })
+
+
+
+    </script>
+
+
+</body>
+
+</html>
+
